@@ -32,7 +32,7 @@ from homeassistant.helpers.typing import ConfigType, VolDictType
 from homeassistant.util.hass_dict import HassKey
 from homeassistant.util.unit_conversion import TemperatureConverter
 
-from .const import DOMAIN
+from .const import DOMAIN, WaterHeaterDeviceClass
 
 DATA_COMPONENT: HassKey[EntityComponent[WaterHeaterEntity]] = HassKey(DOMAIN)
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
@@ -140,6 +140,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class WaterHeaterEntityDescription(EntityDescription, frozen_or_thawed=True):
     """A class that describes water heater entities."""
 
+    device_class: WaterHeaterDeviceClass | None = None
+
 
 CACHED_PROPERTIES_WITH_ATTR_ = {
     "temperature_unit",
@@ -169,6 +171,7 @@ class WaterHeaterEntity(Entity, cached_properties=CACHED_PROPERTIES_WITH_ATTR_):
     entity_description: WaterHeaterEntityDescription
     _attr_current_operation: str | None = None
     _attr_current_temperature: float | None = None
+    _attr_device_class: WaterHeaterDeviceClass | None
     _attr_is_away_mode_on: bool | None = None
     _attr_max_temp: float
     _attr_min_temp: float
@@ -187,6 +190,16 @@ class WaterHeaterEntity(Entity, cached_properties=CACHED_PROPERTIES_WITH_ATTR_):
     def state(self) -> str | None:
         """Return the current state."""
         return self.current_operation
+
+    @final
+    @property
+    def device_class(self) -> WaterHeaterDeviceClass | None:
+        """Return the device class of the water heater."""
+        if hasattr(self, "_attr_device_class"):
+            return self._attr_device_class
+        if hasattr(self, "entity_description"):
+            return self.entity_description.device_class
+        return None
 
     @property
     def precision(self) -> float:
